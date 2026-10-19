@@ -1,3 +1,16 @@
+# Eternal Hermes Agent
+
+Personal fork of [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) by
+[EternalShade3D](https://github.com/EternalShade3D). Upstream stays the source of truth; this fork
+only carries small local changes on top of it.
+
+**What's different here**
+
+- **Desktop status bar** — the diagnostic readouts (context meter, cache hit rate, tokens/s, session
+  timer) render in a centered zone instead of hugging the right edge on a maximized window.
+
+---
+
 <p align="center">
   <img src="assets/banner.png" alt="Hermes Agent" width="100%">
 </p>

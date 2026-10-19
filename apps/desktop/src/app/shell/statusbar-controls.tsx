@@ -25,6 +25,20 @@ import {
   toggleStatusbarVisible
 } from '@/store/statusbar-prefs'
 
+// Diagnostics read out in the MIDDLE of the bar. With `justify-between` they
+// were stranded against the window edge on a maximized window, so the bar read
+// as "everything shoved right". These ids live in the right cluster's array but
+// render in the centered zone; anything else (approvals, terminal, version
+// pills, plugin contributions) stays pinned right. Matching by id keeps the
+// contribution API and the right-click show/hide menu untouched.
+const CENTERED_ITEM_IDS: readonly string[] = [
+  'context-usage',
+  'cache-hit-rate',
+  'tokens-per-second',
+  'session-timer',
+  'running-timer'
+]
+
 // Shared chrome styling for interactive statusbar items (button / link / menu
 // trigger). The 'text' variant intentionally omits hover/transition/disabled.
 const STATUSBAR_ACTION_CLASS =
@@ -96,28 +110,41 @@ export function StatusbarControls({ className, leftItems = [], items = [], ...pr
   const visible = (item: StatusbarItem) =>
     !item.hidden && (item.lockedVisible || !item.toggleLabel || !hiddenIds.includes(item.id))
 
+  const shown = items.filter(visible)
+  const centeredItems = shown.filter(item => CENTERED_ITEM_IDS.includes(item.id))
+  const pinnedItems = shown.filter(item => !CENTERED_ITEM_IDS.includes(item.id))
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <footer
           className={cn(
-            'flex h-5 shrink-0 items-stretch justify-between gap-2 bg-(--ui-sidebar-surface-background) px-1 py-0 text-(--ui-text-tertiary) [-webkit-app-region:no-drag]',
+            'flex h-5 shrink-0 items-stretch gap-2 bg-(--ui-sidebar-surface-background) px-1 py-0 text-(--ui-text-tertiary) [-webkit-app-region:no-drag]',
             className
           )}
           data-slot="statusbar"
           {...props}
         >
+          {/* Three zones, not `justify-between`: the equal `flex-1` side clusters
+              make the middle zone truly centered (its midpoint is the bar's
+              midpoint) instead of leaving the readouts stranded against the
+              window edge on a maximized window. */}
           {/* `overflow-x-clip` (not `overflow-x-auto`) so a wide status item — for
               example "Connecting…" on a fresh/untitled session — can't paint a
               horizontal scrollbar across the bottom of the window. Items already
               `truncate` their labels, so clipping is the right behavior. */}
-          <div className="flex min-w-0 items-stretch gap-0.5 overflow-x-clip">
+          <div className="flex min-w-0 flex-1 items-stretch gap-0.5 overflow-x-clip">
             {leftItems.filter(visible).map(item => (
               <StatusbarItemView item={item} key={`left:${item.id}`} navigate={navigate} />
             ))}
           </div>
-          <div className="flex min-w-0 items-stretch gap-0.5 overflow-x-clip">
-            {items.filter(visible).map(item => (
+          <div className="flex min-w-0 items-stretch justify-center gap-0.5 overflow-x-clip">
+            {centeredItems.map(item => (
+              <StatusbarItemView item={item} key={`center:${item.id}`} navigate={navigate} />
+            ))}
+          </div>
+          <div className="flex min-w-0 flex-1 items-stretch justify-end gap-0.5 overflow-x-clip">
+            {pinnedItems.map(item => (
               <StatusbarItemView item={item} key={`right:${item.id}`} navigate={navigate} />
             ))}
           </div>
